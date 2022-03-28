@@ -18,7 +18,7 @@ library(readxl)
 
 Goal: Forecast daily demand for January 2011 based on historical data
 
-### Processing the Data
+## Processing the Data
 
 ```{r data}
 load <- read_excel("data/load.xlsx")
@@ -57,17 +57,52 @@ ggplot(temperature, aes(x = date, y = daily_avg)) +
 ```
 
 
-### Creating the Time-Series object
+## Creating the Time-Series object
 
 ```{r}
-load_ts <- msts(load, seasonal.periods = c(7, 365.25))
+load_ts <- msts(load$daily_avg, seasonal.periods = c(7, 365.25), start = c(2005, 1, 1))
+
+load_ts %>%
+  mstl() %>%
+  autoplot() +
+  theme_bw()
 ```
 
-### Fitting Models
+## Fitting Models
 
 ```{r}
+n_for = 365
 
+# training data
+load_ts_train <- subset(load_ts, end = length(load_ts) - n_for)
+# test data
+load_ts_test <- subset(load_ts, start = length(load_ts) - n_for)
+
+autoplot(load_ts_train) +
+  theme_bw()
+autoplot(load_ts_test) +
+  theme_bw()
 ```
+
+### Model 1: STL + ETS
+
+```{r}
+ETS_fit <- stlf(load_ts_train, h=365)
+
+# plot forecast results
+autoplot(ETS_fit) + 
+  ylab("Active Power") +
+  theme_bw()
+
+# plot model + observed data
+autoplot(load_ts) +
+  autolayer(ETS_fit, series = "STL + ETS", PI = FALSE) +
+  ylab("Active Power") +
+  theme_bw()
+```
+
+## Forecast daily demand for 2010
+
 
 
 
