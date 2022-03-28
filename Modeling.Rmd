@@ -68,7 +68,7 @@ load_ts %>%
   theme_bw()
 ```
 
-## Fitting Models
+## Fitting Models and Forecasting for 2010
 
 ```{r}
 n_for = 365
@@ -101,7 +101,14 @@ autoplot(load_ts) +
   theme_bw()
 ```
 
-## Forecast daily demand for 2010
+## Comparing Models
+
+```{r}
+# model 1: STL + ETS
+ETS_scores <- accuracy(ETS_fit$mean, load_ts_test)
+ETS_scores
+```
+
 
 
 
