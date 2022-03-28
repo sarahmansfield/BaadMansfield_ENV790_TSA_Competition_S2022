@@ -1,0 +1,74 @@
+---
+title: "Untitled"
+author: "Sarah Mansfield, Alex Baad"
+date: "3/27/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, message=F}
+library(tseries)
+library(forecast)
+library(tidyverse)
+library(readxl)
+```
+
+Goal: Forecast daily demand for January 2011 based on historical data
+
+### Processing the Data
+
+```{r data}
+load <- read_excel("data/load.xlsx")
+relative_humidity <- read_excel("data/relative_humidity.xlsx")
+temperature <- read_excel("data/temperature.xlsx")
+
+# aggregate data
+load <- load %>%
+  select(-meter_id) %>%
+  mutate(daily_avg = rowMeans(select(., starts_with("h")), na.rm = TRUE)) %>%
+  select(date, daily_avg)
+
+relative_humidity <- relative_humidity %>%
+  mutate(avg = rowMeans(select(., starts_with("rh")), na.rm = TRUE)) %>%
+  group_by(date) %>%
+  summarise(daily_avg = mean(avg))
+
+temperature <- temperature %>%
+  mutate(avg = rowMeans(select(., starts_with("t")), na.rm = TRUE)) %>%
+  group_by(date) %>%
+  summarise(daily_avg = mean(avg))
+```
+
+```{r}
+ggplot(load, aes(x = date, y = daily_avg)) +
+  geom_line() +
+  theme_bw()
+
+ggplot(relative_humidity, aes(x = date, y = daily_avg)) +
+  geom_line() +
+  theme_bw()
+
+ggplot(temperature, aes(x = date, y = daily_avg)) +
+  geom_line() +
+  theme_bw()
+```
+
+
+### Creating the Time-Series object
+
+```{r}
+load_ts <- msts(load, seasonal.periods = c(7, 365.25))
+```
+
+### Fitting Models
+
+```{r}
+
+```
+
+
+
+
