@@ -125,7 +125,7 @@ autoplot(ARIMA_Four_for_2) +
   theme_bw()
 
 #Plot model + observed data
-autoplot(ts_act_power_daily) +
+autoplot(load_ts) +
   autolayer(ARIMA_Four_for_2, series="ARIMA_FOURIER_2,2",PI=FALSE) +
   ylab("Active Power") +
   theme_bw()
@@ -150,7 +150,7 @@ autoplot(ARIMA_Four_for_4) +
   theme_bw()
 
 #Plot model + observed data
-autoplot(ts_act_power_daily) +
+autoplot(load_ts) +
   autolayer(ARIMA_Four_for_4, series="ARIMA_FOURIER_2,4",PI=FALSE) +
   ylab("Active Power") +
   theme_bw()
@@ -175,7 +175,7 @@ autoplot(ARIMA_Four_for_6) +
   theme_bw()
 
 #Plot model + observed data
-autoplot(ts_act_power_daily) +
+autoplot(load_ts) +
   autolayer(ARIMA_Four_for_6, series="ARIMA_FOURIER_2,6",PI=FALSE) +
   ylab("Active Power") +
   theme_bw()
@@ -200,7 +200,7 @@ autoplot(ARIMA_Four_for_12) +
   theme_bw()
 
 #Plot model + observed data
-autoplot(ts_act_power_daily) +
+autoplot(load_ts) +
   autolayer(ARIMA_Four_for_12, series="ARIMA_FOURIER_2,12",PI=FALSE) +
   ylab("Active Power") +
   theme_bw()
