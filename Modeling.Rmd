@@ -205,6 +205,22 @@ autoplot(load_ts) +
   ylab("Active Power") +
   theme_bw()
 ```
+## Model 3: TBATS
+
+```{r}
+TBATS_fit <- tbats(load_ts_train)
+
+TBATS_for <- forecast(TBATS_fit, h=365)
+
+#Plot foresting results
+autoplot(TBATS_for) +
+  ylab("Active Power") 
+
+#Plot model + observed data
+autoplot(load_ts_train) +
+  autolayer(TBATS_for, series="TBATS",PI=FALSE)+
+  ylab("Active Power") 
+```
 
 
 ## Comparing Models
@@ -219,6 +235,9 @@ ARIMA_2_scores <- accuracy(ARIMA_Four_for_2$mean, load_ts_test)
 ARIMA_4_scores <- accuracy(ARIMA_Four_for_4$mean, load_ts_test)
 ARIMA_6_scores <- accuracy(ARIMA_Four_for_6$mean, load_ts_test)
 ARIMA_12_scores <- accuracy(ARIMA_Four_for_12$mean, load_ts_test)
+
+#model 3: TBATS
+TBATS_scores <- accuracy(TBATS_for$mean,load_ts_test)
 ```
 
 
