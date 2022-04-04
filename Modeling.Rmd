@@ -229,7 +229,7 @@ autoplot(TBATS_for) +
   ylab("Active Power") 
 
 #Plot model + observed data
-autoplot(load_ts_train) +
+autoplot(load_ts) +
   autolayer(TBATS_for, series="TBATS",PI=FALSE)+
   ylab("Active Power") 
 ```
