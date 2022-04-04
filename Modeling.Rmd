@@ -28,30 +28,33 @@ temperature <- read_excel("data/temperature.xlsx")
 # aggregate data
 load <- load %>%
   select(-meter_id) %>%
-  mutate(daily_avg = rowMeans(select(., starts_with("h")), na.rm = TRUE)) %>%
-  select(date, daily_avg)
+  mutate(daily_avg_load = rowMeans(select(., starts_with("h")), na.rm = TRUE)) %>%
+  select(date, daily_avg_load)
 
 relative_humidity <- relative_humidity %>%
   mutate(avg = rowMeans(select(., starts_with("rh")), na.rm = TRUE)) %>%
   group_by(date) %>%
-  summarise(daily_avg = mean(avg))
+  summarise(daily_avg_humidity = mean(avg))
 
 temperature <- temperature %>%
   mutate(avg = rowMeans(select(., starts_with("t")), na.rm = TRUE)) %>%
   group_by(date) %>%
-  summarise(daily_avg = mean(avg))
+  summarise(daily_avg_temp = mean(avg))
+
+df <- inner_join(load, relative_humidity) %>%
+  inner_join(temperature)
 ```
 
 ```{r}
-ggplot(load, aes(x = date, y = daily_avg)) +
+ggplot(load, aes(x = date, y = daily_avg_load)) +
   geom_line() +
   theme_bw()
 
-ggplot(relative_humidity, aes(x = date, y = daily_avg)) +
+ggplot(relative_humidity, aes(x = date, y = daily_avg_humidity)) +
   geom_line() +
   theme_bw()
 
-ggplot(temperature, aes(x = date, y = daily_avg)) +
+ggplot(temperature, aes(x = date, y = daily_avg_temp)) +
   geom_line() +
   theme_bw()
 ```
@@ -60,7 +63,7 @@ ggplot(temperature, aes(x = date, y = daily_avg)) +
 ## Creating the Time-Series object
 
 ```{r}
-load_ts <- msts(load$daily_avg, seasonal.periods = c(7, 365.25), start = c(2005, 1, 1))
+load_ts <- msts(df$daily_avg_load, seasonal.periods = c(7, 365.25), start = c(2005, 1, 1))
 
 load_ts %>%
   mstl() %>%
@@ -76,12 +79,21 @@ n_for = 365
 # training data
 load_ts_train <- subset(load_ts, end = length(load_ts) - n_for)
 # test data
-load_ts_test <- subset(load_ts, start = length(load_ts) - n_for)
+load_ts_test <- subset(load_ts, start = length(load_ts) - n_for + 1)
 
 autoplot(load_ts_train) +
   theme_bw()
 autoplot(load_ts_test) +
   theme_bw()
+
+df_train <- df %>%
+  slice(1:(length(load_ts) - n_for)) %>%
+  select(daily_avg_humidity, daily_avg_temp) %>%
+  as.matrix()
+df_test <- df %>%
+  slice((length(load_ts) - n_for + 1):length(load_ts)) %>%
+  select(daily_avg_humidity, daily_avg_temp) %>%
+  as.matrix()
 ```
 
 ### Model 1: STL + ETS
@@ -228,7 +240,6 @@ autoplot(load_ts_train) +
 ```{r}
 # model 1: STL + ETS
 ETS_scores <- accuracy(ETS_fit$mean, load_ts_test)
-ETS_scores
 
 #model 2: Arima + Fourier
 ARIMA_2_scores <- accuracy(ARIMA_Four_for_2$mean, load_ts_test)
@@ -240,6 +251,28 @@ ARIMA_12_scores <- accuracy(ARIMA_Four_for_12$mean, load_ts_test)
 TBATS_scores <- accuracy(TBATS_for$mean,load_ts_test)
 ```
 
+
+## Predicting January 2011
+
+```{r}
+submission_template <- read_excel("submission_template.xlsx",
+                                  sheet = "p90", n_max = 31)
+```
+
+```{r}
+# fitting models on all the data
+n_for <- 31
+
+ETS_fit <- stlf(load_ts, h=n_for)
+```
+
+```{r}
+# build kaggle submission file
+submission_template$load <- ETS_fit$mean
+
+# change the path name for each submission file
+write.csv(submission_template, "kaggle_submissions/sub4.csv", row.names = FALSE)
+```
 
 
 
