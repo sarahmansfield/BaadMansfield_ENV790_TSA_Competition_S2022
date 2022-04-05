@@ -14,6 +14,7 @@ library(tseries)
 library(forecast)
 library(tidyverse)
 library(readxl)
+library(kableExtra)
 ```
 
 Goal: Forecast daily demand for January 2011 based on historical data
@@ -234,6 +235,7 @@ autoplot(load_ts) +
   autolayer(TBATS_for, series="TBATS",PI=FALSE)+
   ylab("Load") 
 ```
+
 ## Model 4: Neural Network
 
 ```{r}
@@ -265,7 +267,7 @@ autoplot(load_ts) +
 
 ```
 
-## Model 4: Seasonal Naive
+## Model 5: Seasonal Naive
 
 ```{r}
 SNAIVE_seas <- snaive(load_ts_train, h=365)
@@ -279,7 +281,7 @@ autoplot(load_ts) +
   ylab("Load") 
 ```
 
-## Model 5: SARIMA
+## Model 6: SARIMA
 
 ```{r}
 SARIMA_autofit <- auto.arima(load_ts_train, D=1)
@@ -312,32 +314,47 @@ ARIMA_12_scores <- accuracy(ARIMA_Four_for_12$mean, load_ts_test)
 #model 3: TBATS
 TBATS_scores <- accuracy(TBATS_for$mean,load_ts_test)
 
-<<<<<<< HEAD
 #model 4: NN
 NN_1_scores <- accuracy(NN_for_1$mean,load_ts_test)
 NN_2_scores <- accuracy(NN_for_2$mean,load_ts_test)
-=======
+
 #model 4: seasonal naive
 SNAIVE_scores <- accuracy(SNAIVE_seas$mean, load_ts_test)
 
 #model 5: SARIMA
 SARIMA_scores <- accuracy(SARIMA_for$mean, load_ts_test)
->>>>>>> 90d4e6ca5ef287a9bee99356972d7129fb4faebc
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#create data frame
+scores <- as.data.frame(
+  rbind(ETS_scores, ARIMA_2_scores, ARIMA_4_scores, ARIMA_6_scores, ARIMA_12_scores,
+        TBATS_scores, NN_1_scores, NN_2_scores, SNAIVE_scores, SARIMA_scores)
+  )
+row.names(scores) <- c("STL+ETS", "ARIMA+Fourier k(2,2)", "ARIMA+Fourier k(2,4)", 
+                       "ARIMA+Fourier k(2,6)", "ARIMA+Fourier k(2,12)", "TBATS", 
+                       "NN no xreg", "NN Fourier", "SNAIVE", "SARIMA")
+
+kbl(scores, 
+      caption = "Forecast Accuracy for Daily Average Load",
+      digits = array(5,ncol(scores))) %>%
+  kable_styling(full_width = FALSE, position = "center", latex_options = "hold_position") %>%
+  #highlight model with lowest RMSE
+  kable_styling(latex_options="striped", stripe_index = which.min(scores[,"RMSE"]))
 ```
 
 
 ## Predicting January 2011
 
-```{r}
+```{r eval=F}
 submission_template <- read_excel("submission_template.xlsx",
                                   sheet = "p90", n_max = 31)
 ```
 
-```{r}
+```{r eval=F}
 # fitting models on all the data
 n_for <- 31
 
-<<<<<<< HEAD
 #ETS
 ETS_fit <- stlf(load_ts, h=n_for)
 
@@ -401,21 +418,25 @@ NN_for_1 <- forecast(NN_fit_1, h=n_for)
 NN_fit_2 <- nnetar(load_ts,p=1,P=0,xreg=fourier(load_ts, K=c(2,12)))
 NN_for_2 <- forecast(NN_fit_2, h=n_for,xreg=fourier(load_ts, 
                                           K=c(2,12),h=n_for))
-=======
+
+#SNAIVE
+SNAIVE_fit <- snaive(load_ts, h=n_for)
+
+#SARIMA
 SARIMA_fit <- Arima(load_ts, order=c(4,0,2), seasonal=c(0,1,0), include.drift = TRUE)
 SARIMA_for <- forecast(SARIMA_fit, h=n_for)
->>>>>>> 90d4e6ca5ef287a9bee99356972d7129fb4faebc
 ```
 
-```{r}
+```{r eval=F}
 # build kaggle submission file
-<<<<<<< HEAD
 submission_template$load <- ETS_fit$mean
 submission_template$load <- ARIMA_Four_for_2$mean
 submission_template$load <- ARIMA_Four_for_4$mean
 submission_template$load <- ARIMA_Four_for_6$mean
 submission_template$load <- NN_for_1$mean
 submission_template$load <- NN_for_2$mean
+submission_template$load <- SNAIVE_fit$mean
+submission_template$load <- SARIMA_for$mean
 
 # change the path name for each submission file
 write.csv(submission_template, "kaggle_submissions/sub4.csv", row.names = FALSE)
@@ -424,12 +445,8 @@ write.csv(submission_template, "kaggle_submissions/sub6.csv", row.names = FALSE)
 write.csv(submission_template, "kaggle_submissions/sub7.csv", row.names = FALSE)
 write.csv(submission_template, "kaggle_submissions/sub8.csv", row.names = FALSE)
 write.csv(submission_template, "kaggle_submissions/sub9.csv", row.names = FALSE)
-=======
-submission_template$load <- SARIMA_for$mean
-
-# change the path name for each submission file
+write.csv(submission_template, "kaggle_submissions/sub10.csv", row.names = FALSE)
 write.csv(submission_template, "kaggle_submissions/sub11.csv", row.names = FALSE)
->>>>>>> 90d4e6ca5ef287a9bee99356972d7129fb4faebc
 ```
 
 
