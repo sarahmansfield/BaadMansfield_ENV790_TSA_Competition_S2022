@@ -233,6 +233,36 @@ autoplot(load_ts) +
   autolayer(TBATS_for, series="TBATS",PI=FALSE)+
   ylab("Active Power") 
 ```
+## Model 4: Neural Network
+
+```{r}
+#p=1 P=1 no xreg
+NN_fit_1 <- nnetar(load_ts_train,p=1,P=1)
+NN_for_1 <- forecast(NN_fit_1, h=365)
+
+#Plot foresting results
+autoplot(NN_for_1) +
+  ylab("Active Power") 
+
+#Plot model + observed data
+autoplot(load_ts) +
+  autolayer(NN_for_1, series="Neural Network No xreg",PI=FALSE)+
+  ylab("Active Power") 
+
+#p=1 P=0 xreg fourier
+NN_fit_2 <- nnetar(load_ts_train,p=1,P=0,xreg=fourier(load_ts_train, K=c(2,12)))
+NN_for_2 <- forecast(NN_fit_2, h=365,xreg=fourier(load_ts_train, 
+                                          K=c(2,12),h=365))
+#Plot foresting results
+autoplot(NN_for_2) +
+  ylab("Active Power") 
+
+#Plot model + observed data
+autoplot(load_ts) +
+  autolayer(NN_for_2, series="Neural Network Fourier",PI=FALSE)+
+  ylab("Active Power") 
+
+```
 
 
 ## Comparing Models
@@ -249,6 +279,10 @@ ARIMA_12_scores <- accuracy(ARIMA_Four_for_12$mean, load_ts_test)
 
 #model 3: TBATS
 TBATS_scores <- accuracy(TBATS_for$mean,load_ts_test)
+
+#model 4: NN
+NN_1_scores <- accuracy(NN_for_1$mean,load_ts_test)
+NN_2_scores <- accuracy(NN_for_2$mean,load_ts_test)
 ```
 
 
@@ -263,15 +297,87 @@ submission_template <- read_excel("submission_template.xlsx",
 # fitting models on all the data
 n_for <- 31
 
+#ETS
 ETS_fit <- stlf(load_ts, h=n_for)
+
+#ARIMA + Fourier
+ARIMA_Four_fit_2 <- forecast::auto.arima(load_ts, 
+                             seasonal=FALSE, 
+                             lambda=0,
+                             xreg=fourier(load_ts, 
+                                          K=c(2,2))
+                             )
+ARIMA_Four_for_2 <- forecast::forecast(ARIMA_Four_fit_2,
+                           xreg=fourier(load_ts,
+                                        K=c(2,2),
+                                        h=n_for),
+                           h=n_for
+                           ) 
+ARIMA_Four_fit_4 <- forecast::auto.arima(load_ts, 
+                             seasonal=FALSE, 
+                             lambda=0,
+                             xreg=fourier(load_ts, 
+                                          K=c(2,4))
+                             )
+ARIMA_Four_for_4 <- forecast::forecast(ARIMA_Four_fit_4,
+                           xreg=fourier(load_ts,
+                                        K=c(2,4),
+                                        h=n_for),
+                           h=n_for
+                           ) 
+ARIMA_Four_fit_6 <- forecast::auto.arima(load_ts, 
+                             seasonal=FALSE, 
+                             lambda=0,
+                             xreg=fourier(load_ts, 
+                                          K=c(2,6))
+                             )
+ARIMA_Four_for_6 <- forecast::forecast(ARIMA_Four_fit_6,
+                           xreg=fourier(load_ts,
+                                        K=c(2,6),
+                                        h=n_for),
+                           h=n_for
+                           )
+ARIMA_Four_fit_12 <- forecast::auto.arima(load_ts, 
+                             seasonal=FALSE, 
+                             lambda=0,
+                             xreg=fourier(load_ts, 
+                                          K=c(2,12))
+                             )
+ARIMA_Four_for_12 <- forecast::forecast(ARIMA_Four_fit_12,
+                           xreg=fourier(load_ts,
+                                        K=c(2,12),
+                                        h=n_for),
+                           h=n_for
+                           )
+#TBATS
+TBATS_fit <- tbats(load_ts)
+TBATS_for <- forecast(TBATS_fit, h=n_for)
+
+#NN
+NN_fit_1 <- nnetar(load_ts,p=1,P=1)
+NN_for_1 <- forecast(NN_fit_1, h=n_for)
+
+NN_fit_2 <- nnetar(load_ts,p=1,P=0,xreg=fourier(load_ts, K=c(2,12)))
+NN_for_2 <- forecast(NN_fit_2, h=n_for,xreg=fourier(load_ts, 
+                                          K=c(2,12),h=n_for))
 ```
 
 ```{r}
 # build kaggle submission file
 submission_template$load <- ETS_fit$mean
+submission_template$load <- ARIMA_Four_for_2$mean
+submission_template$load <- ARIMA_Four_for_4$mean
+submission_template$load <- ARIMA_Four_for_6$mean
+submission_template$load <- NN_for_1$mean
+submission_template$load <- NN_for_2$mean
 
 # change the path name for each submission file
 write.csv(submission_template, "kaggle_submissions/sub4.csv", row.names = FALSE)
+write.csv(submission_template, "kaggle_submissions/sub5.csv", row.names = FALSE)
+write.csv(submission_template, "kaggle_submissions/sub6.csv", row.names = FALSE)
+write.csv(submission_template, "kaggle_submissions/sub7.csv", row.names = FALSE)
+write.csv(submission_template, "kaggle_submissions/sub8.csv", row.names = FALSE)
+write.csv(submission_template, "kaggle_submissions/sub9.csv", row.names = FALSE)
 ```
 
 
