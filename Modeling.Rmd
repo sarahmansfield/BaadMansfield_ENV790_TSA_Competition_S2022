@@ -103,13 +103,13 @@ ETS_fit <- stlf(load_ts_train, h=365)
 
 # plot forecast results
 autoplot(ETS_fit) + 
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 # plot model + observed data
 autoplot(load_ts) +
   autolayer(ETS_fit, series = "STL + ETS", PI = FALSE) +
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 ```
 
@@ -133,13 +133,13 @@ ARIMA_Four_for_2 <- forecast::forecast(ARIMA_Four_fit_2,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_2) + 
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_2, series="ARIMA_FOURIER_2,2",PI=FALSE) +
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 #Arima+Fourier(2,4)
@@ -158,13 +158,13 @@ ARIMA_Four_for_4 <- forecast::forecast(ARIMA_Four_fit_4,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_4) + 
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_4, series="ARIMA_FOURIER_2,4",PI=FALSE) +
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 #Arima+Fourier(2,6)
@@ -183,13 +183,13 @@ ARIMA_Four_for_6 <- forecast::forecast(ARIMA_Four_fit_6,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_6) + 
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_6, series="ARIMA_FOURIER_2,6",PI=FALSE) +
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 #Arima+Fourier(2,12)
@@ -208,15 +208,16 @@ ARIMA_Four_for_12 <- forecast::forecast(ARIMA_Four_fit_12,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_12) + 
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_12, series="ARIMA_FOURIER_2,12",PI=FALSE) +
-  ylab("Active Power") +
+  ylab("Load") +
   theme_bw()
 ```
+
 ## Model 3: TBATS
 
 ```{r}
@@ -224,15 +225,30 @@ TBATS_fit <- tbats(load_ts_train)
 
 TBATS_for <- forecast(TBATS_fit, h=365)
 
-#Plot foresting results
+#Plot forecasting results
 autoplot(TBATS_for) +
-  ylab("Active Power") 
+  ylab("Load") 
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(TBATS_for, series="TBATS",PI=FALSE)+
-  ylab("Active Power") 
+  ylab("Load") 
 ```
+
+## Model 4: Seasonal Naive
+
+```{r}
+SNAIVE_seas <- snaive(load_ts_train, h=365)
+
+autoplot(SNAIVE_seas) +
+  ylab("Load") 
+
+#Plot model + observed data
+autoplot(load_ts) +
+  autolayer(SNAIVE_seas, series="SNAIVE",PI=FALSE)+
+  ylab("Load") 
+```
+
 
 
 ## Comparing Models
@@ -249,6 +265,9 @@ ARIMA_12_scores <- accuracy(ARIMA_Four_for_12$mean, load_ts_test)
 
 #model 3: TBATS
 TBATS_scores <- accuracy(TBATS_for$mean,load_ts_test)
+
+#model 4: seasonal naive
+SNAIVE_scores <- accuracy(SNAIVE_seas$mean, load_ts_test)
 ```
 
 
