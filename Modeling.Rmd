@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "TSA Forecasting Competition"
 author: "Sarah Mansfield, Alex Baad"
 date: "3/27/2022"
 output: pdf_document
@@ -49,16 +49,24 @@ df <- inner_join(load, relative_humidity) %>%
 ```{r}
 ggplot(load, aes(x = date, y = daily_avg_load)) +
   geom_line() +
+  labs(x = "Day", y = "Average Load", 
+       title = "Average Daily Load (2005-2010)") +
   theme_bw()
 
 ggplot(relative_humidity, aes(x = date, y = daily_avg_humidity)) +
   geom_line() +
+  labs(x = "Day", y = "Average Humidity", 
+       title = "Average Daily Humidity (2005-2010)") +
   theme_bw()
 
 ggplot(temperature, aes(x = date, y = daily_avg_temp)) +
   geom_line() +
+  labs(x = "Day", y = "Average Temperature (F)", 
+       title = "Average Daily Temperature (2005-2010)") +
   theme_bw()
 ```
+
+After aggregating the data and plotting average values over time, we can see that average daily load does appear to exhibit seasonality, as well as average daily humidity and average daily temperature (although we note that temperature and humidity were not used in our model fitting process due to lack of temperature and humidity measurements for 2011).
 
 
 ## Creating the Time-Series object
@@ -72,6 +80,9 @@ load_ts %>%
   theme_bw()
 ```
 
+Again, after fitting a time series object to the data and decomposing, we see a strong yearly seasonal trend, as well as some evidence of a weekly trend. Our decomposition also shows that overall, there is an upward trend in daily average load from 2005-2010.
+
+
 ## Fitting Models and Forecasting for 2010
 
 ```{r}
@@ -83,19 +94,14 @@ load_ts_train <- subset(load_ts, end = length(load_ts) - n_for)
 load_ts_test <- subset(load_ts, start = length(load_ts) - n_for + 1)
 
 autoplot(load_ts_train) +
+  labs(x = "Day", y = "Average Daily Load", title = "Training Data") +
   theme_bw()
 autoplot(load_ts_test) +
+  labs(x = "Day", y = "Average Daily Load", title = "Test Data") +
   theme_bw()
-
-df_train <- df %>%
-  slice(1:(length(load_ts) - n_for)) %>%
-  select(daily_avg_humidity, daily_avg_temp) %>%
-  as.matrix()
-df_test <- df %>%
-  slice((length(load_ts) - n_for + 1):length(load_ts)) %>%
-  select(daily_avg_humidity, daily_avg_temp) %>%
-  as.matrix()
 ```
+
+To aid in the model selection process, we'll split the data into a training and testing subset, where the data up until 2010 is used to train each model and the 2010 data is used for calculating accuracy metrics for each model.
 
 ### Model 1: STL + ETS
 
@@ -104,13 +110,13 @@ ETS_fit <- stlf(load_ts_train, h=365)
 
 # plot forecast results
 autoplot(ETS_fit) + 
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 # plot model + observed data
 autoplot(load_ts) +
   autolayer(ETS_fit, series = "STL + ETS", PI = FALSE) +
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 ```
 
@@ -134,13 +140,13 @@ ARIMA_Four_for_2 <- forecast::forecast(ARIMA_Four_fit_2,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_2) + 
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_2, series="ARIMA_FOURIER_2,2",PI=FALSE) +
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 #Arima+Fourier(2,4)
@@ -159,13 +165,13 @@ ARIMA_Four_for_4 <- forecast::forecast(ARIMA_Four_fit_4,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_4) + 
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_4, series="ARIMA_FOURIER_2,4",PI=FALSE) +
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 #Arima+Fourier(2,6)
@@ -184,13 +190,13 @@ ARIMA_Four_for_6 <- forecast::forecast(ARIMA_Four_fit_6,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_6) + 
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_6, series="ARIMA_FOURIER_2,6",PI=FALSE) +
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 #Arima+Fourier(2,12)
@@ -209,13 +215,13 @@ ARIMA_Four_for_12 <- forecast::forecast(ARIMA_Four_fit_12,
                            ) 
 #Plot foresting results
 autoplot(ARIMA_Four_for_12) + 
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(ARIMA_Four_for_12, series="ARIMA_FOURIER_2,12",PI=FALSE) +
-  ylab("Load") +
+  ylab("Average Daily Load") +
   theme_bw()
 ```
 
@@ -228,12 +234,14 @@ TBATS_for <- forecast(TBATS_fit, h=365)
 
 #Plot forecasting results
 autoplot(TBATS_for) +
-  ylab("Load") 
+  ylab("Average Daily Load") +
+  theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(TBATS_for, series="TBATS",PI=FALSE)+
-  ylab("Load") 
+  ylab("Average Daily Load") +
+  theme_bw()
 ```
 
 ## Model 4: Neural Network
@@ -243,14 +251,16 @@ autoplot(load_ts) +
 NN_fit_1 <- nnetar(load_ts_train,p=1,P=1)
 NN_for_1 <- forecast(NN_fit_1, h=365)
 
-#Plot foresting results
+#Plot forecasting results
 autoplot(NN_for_1) +
-  ylab("Active Power") 
+  ylab("Average Daily Load") +
+  theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(NN_for_1, series="Neural Network No xreg",PI=FALSE)+
-  ylab("Active Power") 
+  ylab("Average Daily Load") +
+  theme_bw()
 
 #p=1 P=0 xreg fourier
 NN_fit_2 <- nnetar(load_ts_train,p=1,P=0,xreg=fourier(load_ts_train, K=c(2,12)))
@@ -258,13 +268,14 @@ NN_for_2 <- forecast(NN_fit_2, h=365,xreg=fourier(load_ts_train,
                                           K=c(2,12),h=365))
 #Plot foresting results
 autoplot(NN_for_2) +
-  ylab("Active Power") 
+  ylab("Average Daily Load") +
+  theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(NN_for_2, series="Neural Network Fourier",PI=FALSE)+
-  ylab("Active Power") 
-
+  ylab("Average Daily Load") +
+  theme_bw()
 ```
 
 ## Model 5: Seasonal Naive
@@ -273,30 +284,36 @@ autoplot(load_ts) +
 SNAIVE_seas <- snaive(load_ts_train, h=365)
 
 autoplot(SNAIVE_seas) +
-  ylab("Load") 
+  ylab("Average Daily Load") +
+  theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(SNAIVE_seas, series="SNAIVE",PI=FALSE)+
-  ylab("Load") 
+  ylab("Average Daily Load") +
+  theme_bw()
 ```
 
 ## Model 6: SARIMA
 
+
 ```{r}
-SARIMA_autofit <- auto.arima(load_ts_train, D=1)
+# SARIMA_autofit <- auto.arima(load_ts_train, D=1)
+# we'll save the sarima model to an rds object since it takes a long time to fit
+# saveRDS(SARIMA_autofit, "sarima_mod.rds")
+SARIMA_autofit <- readRDS("sarima_mod.rds")
 SARIMA_for <- forecast(SARIMA_autofit, h=365)
 
 autoplot(SARIMA_for) +
-  ylab("Load") 
+  ylab("Average Daily Load") +
+  theme_bw()
 
 #Plot model + observed data
 autoplot(load_ts) +
   autolayer(SARIMA_for, series="SARIMA",PI=FALSE)+
-  ylab("Load") 
+  ylab("Average Daily Load") +
+  theme_bw()
 ```
-
-
 
 
 ## Comparing Models
@@ -342,6 +359,8 @@ kbl(scores,
   #highlight model with lowest RMSE
   kable_styling(latex_options="striped", stripe_index = which.min(scores[,"RMSE"]))
 ```
+
+Comparing accuracy metrics across all of our models for a January 2010 forecast, we can see from the table that the ARIMA+Fourier k(2,2) model performed best when it came to RMSE, and the NN Fourier model performed best when it came to MAPE.
 
 
 ## Predicting January 2011
@@ -448,6 +467,8 @@ write.csv(submission_template, "kaggle_submissions/sub9.csv", row.names = FALSE)
 write.csv(submission_template, "kaggle_submissions/sub10.csv", row.names = FALSE)
 write.csv(submission_template, "kaggle_submissions/sub11.csv", row.names = FALSE)
 ```
+
+We submitted every model we fit to the Kaggle competition, with the SARIMA model performing the best on the public leaderboard. However, we do note that the Kaggle results were based on only 3 days out of the 31 in January 2011, and as a result it is likely that overall there was a model that performed better across the entire month.
 
 
 
